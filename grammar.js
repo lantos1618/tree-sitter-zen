@@ -1,79 +1,189 @@
-
-// function def
-// myFunction: Function{
-//    args    : {
-//      x: Int.i32
-//    }
-//    return  : Int.i32
-//    body    : {
-//       do something
-//    }
-// }
-
 module.exports = grammar({
+    name: 'Zen',
 
-  name: 'zen',
-  rules: {
-    source_file: $ => repeat($._definition),
-    _definition: $ => choice(
-      $_assignment,
-    ),
+    rules: {
+        // This is the entry point for the grammar.
+        source_file: $ => repeat($._expression),
 
-    block: $ => seq(
-      '{',
-      repeat($._statement), 
-      '}'
-    ),
-    assignment_pattern:  $ => seq(
-      field('name', $.identifier),
-      ':',
-      field('right', $.expression)
-    ),
+        // This rule matches any single expression in the language.
+        _expression: $ => choice(
+            $.atom,
+            $.unary,
+            $.binary,
+            $.ternary,
+            $.group,
+            // Add more rules here.
+        ),
 
-    _statement: $ => choice(
-        // todo
-    ),
-    _expression: $=> choice(
-        $.identifier,
-        $.literal,
-    ),
-    unary_expression: $ => prec.left(
-      field('operator', $.unary_operator),
-      field('expression', $.expression)
-    ),
-    unary_operator: $ => choice('!', '...'),
-    literal: $ => choice(
-        $.string_literal,
-        $.integer_literal,
-        $.float_literal,
-    ),
-    identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
-    digit: $=> /\d+/,
-    integer_literal: $ => seq($.digit),
-    float_literal: $ => seq($.digit, '.', $.digit),
-    // strings
-    string: $ => choice(
-      '"',
-      repeat(choice(
-        // either is escaped or not
-        $.string_fragment,
-        $.escape_sequence,
-      )),
-      '"'
-    ),
-    string_fragment: $ => token.immediate(prec(1, /[^'\\']+/)),
-    escape_sequence: $ => token.immediate(seq(
-      '\\',
-      choice(
-        /[^xu0-7]/,
-        /[0-7]{1,3}/,
-        /x[0-9a-fA-F]{2}/,
-        /u[0-9a-fA-F]{4}/,
-        /u{[0-9a-fA-F]+}/
-      )
-    )),
-    comment: $=> token(
-      seq('//', /.*/)
-    ),
-  }
-})
+        atom: $ => choice(
+            $.identifier,
+            $.literal,
+            // $.end_of_file
+        ),
+
+        unary: $ => prec(3, seq(
+            $.unary_op,
+            $._expression
+        )),
+
+        binary: $ => choice(
+            $.binary_symbolic,
+            $.binary_assignment,
+            $.binary_access,
+        ),
+       
+        binary_assignment: $ => prec.left(2, seq(
+            $._expression,
+            ":",
+            $._expression
+        )),
+
+        binary_access: $ => prec.left(seq(
+            $._expression,
+            ".",
+            $._expression
+        )),
+        
+        binary_symbolic: $ => prec.left(seq(
+            $._expression,
+            $.binary_op,
+            $._expression
+        )),
+
+        ternary: $ => choice(
+            $.ternary_if, 
+            $.ternary_functional_def,             
+            $.ternary_functional_stmt,
+        ),
+
+        ternary_functional_stmt : $ => prec(1, seq(
+            $.identifier,
+            $.group_paren,
+            $.group_brace_stmt
+        )),
+ 
+        ternary_functional_def : $ => prec(1, seq(
+            $.identifier,
+            $.group_paren,
+            $.group_brace_def
+        )),
+
+        ternary_if: $ => prec(1, seq(
+            $._expression,
+            "?",
+            $._expression,
+            ":",
+            $._expression
+        )),
+
+        group: $ => choice(
+            $.group_paren,
+        //     // $.group_bracket,
+        //     $.group_brace_def,
+        //     $.group_brace_stmt
+        ),
+
+        group_paren: $ => seq(
+            "(",
+            $._expression,
+            ")"
+        ),
+
+        // group_bracket: $ => seq(
+        //     "[",
+        //     $._expression,
+        //     "]"
+        // ),
+
+        group_brace_def: $ =>  prec(1, seq(
+            "{",
+            seq($.binary_assignment),
+            "}"
+        )),
+
+        group_brace_stmt: $ => seq(
+            "{",
+            $._expression,
+            "}"
+        ),
+
+        // Add more rules here.
+        literal: $ => choice(
+            $.integer_literal,
+            $.float_literal,
+            $.bool_literal,
+            $.char_literal,
+            $.octal_literal,
+            $.hex_literal,
+            $.binary_literal,
+            $.string_literal
+        ),
+
+        integer_literal: $ => /\d+/,
+
+        float_literal: $ => /\d+\.\d+/,
+        
+        bool_literal: $ => choice('true', 'false'),
+
+        char_literal: $ => seq(
+            "'",
+            choice(
+                /[^'\\]/,
+                seq('\\', /./)
+            ),
+            "'"
+        ),
+
+        octal_literal: $ => /0o[0-7]+/,
+
+        hex_literal: $ => /0x[0-9a-fA-F]+/,
+
+        binary_literal: $ => /0b[01]+/,
+
+        string_literal: $ => seq(
+            '"',
+            repeat(choice(
+                /[^"\\]/,
+                seq('\\', /./)
+            )),
+            '"'
+        ),
+
+        identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
+
+
+        unary_op: $ => choice(
+            '!',
+            '...'
+        ),
+
+        binary_op: $ => choice(
+            '==',
+            '!=',
+            '<',
+            '<=',
+            '>',
+            '>=',
+            '&&',
+            '||',
+            '+',
+            '-',
+            '*',
+            '/',
+            '%',
+            '&',
+            '|',
+            '^',
+            '~',
+            '<<',
+            '>>'
+        ),
+    },
+
+    extras: $ => [
+        /\s/, // whitespace
+        /\/\/.*/, // line comment
+      ],
+      
+
+});
