@@ -1,1 +1,10 @@
-hello
+Person: {
+    a: String
+    b: String
+}
+
+
+myPerson: Person (
+    a: "a"
+    b: "b"
+)
