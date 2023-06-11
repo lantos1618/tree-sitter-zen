@@ -22,7 +22,7 @@ module.exports = grammar({
         ),
 
         unary: $ => prec(3, seq(
-            $.unary_op,
+            choice( $.unary_op, $.identifier),
             $._expression
         )),
 
@@ -78,8 +78,8 @@ module.exports = grammar({
 
         group: $ => choice(
             $.group_paren,
-        //     // $.group_bracket,
-        //     $.group_brace_def,
+            // $.group_bracket,
+            $.group_brace_def,
         //     $.group_brace_stmt
         ),
 

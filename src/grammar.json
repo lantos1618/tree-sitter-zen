@@ -53,8 +53,17 @@
         "type": "SEQ",
         "members": [
           {
-            "type": "SYMBOL",
-            "name": "unary_op"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "unary_op"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "identifier"
+              }
+            ]
           },
           {
             "type": "SYMBOL",
@@ -237,6 +246,10 @@
         {
           "type": "SYMBOL",
           "name": "group_paren"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "group_brace_def"
         }
       ]
     },
