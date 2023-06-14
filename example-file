@@ -1,9 +1,9 @@
 Person: {
-    a: String
+    a: String,
     b: String
 }
 
 myPerson: Person (
-    a: "a"
+    a: "a",
     b: "b"
 )
